@@ -35,17 +35,18 @@ func Trace(t Task) *TaskTracer {
 
 func (t *TaskTracer) Run() error {
 
+	t.lock.Lock()
+	defer t.lock.Unlock()
+
 	start := time.Now()
 	err := t.task.Run()
 	dur := int64(time.Now().Sub(start))
 
-	t.lock.Lock()
 	t.count += 1
 	t.d += dur
 	t.d2 += dur * dur
 	t.max = max(t.max, dur)
 	t.min = min(t.min, dur)
-	t.lock.Unlock()
 
 	return err
 }
@@ -53,17 +54,17 @@ func (t *TaskTracer) Run() error {
 // Count is the nb of calls to Run
 func (t *TaskTracer) Count() int64 {
 	t.lock.RLock()
-	r := t.count
-	t.lock.RUnlock()
-	return r
+	defer t.lock.RUnlock()
+
+	return t.count
 }
 
 // CumulativeDuration is the cumulative duration of the task
 func (t *TaskTracer) CumulativeDuration() time.Duration {
 	t.lock.RLock()
-	r := time.Duration(t.d)
-	t.lock.RUnlock()
-	return r
+	defer t.lock.RUnlock()
+
+	return time.Duration(t.d)
 }
 
 // AverageDuration is the average duration of the task
