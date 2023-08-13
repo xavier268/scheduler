@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const VERSION = "0.1.3"
+const VERSION = "0.1.5"
 
 // Tasks are run at regular number of ticks.
 // If Task generates an error, it is removed from scheduler.
@@ -32,8 +32,10 @@ type Scheduler interface {
 
 	// Get the elapsed ticks since last scheduler (re)start.
 	Ticks() int
-	// Get the elapsed duration since last start
+	// Get the calculated elapsed duration since last start
 	Elapsed() time.Duration
+	// Get the actual elapsedtime since last start
+	ActualElapsed() time.Duration
 	// Get the number of tasks currently scheduled.
 	Tasks() int
 	// Get the average load of the last run
@@ -61,6 +63,9 @@ type scheduler struct {
 
 	beforeTick Hook // Hook called before all tasks are run at every tick
 	afterTick  Hook // Hook called after all tasks are run at every tick
+
+	actualStartTime time.Time // time scheduler was started
+	actualStopTime  time.Time // time scheduler was stopped
 
 }
 
@@ -192,6 +197,7 @@ func (s *scheduler) Start(duration time.Duration) {
 	s.duration = duration
 	s.ticker = time.NewTicker(duration) // create and start ticker
 	s.wg.Add(1)                         // wait group for the associated goroutine
+	s.actualStartTime = time.Now()      // register actual start date
 	go func() {
 		defer s.wg.Done()
 		for range s.ticker.C {
@@ -214,9 +220,11 @@ func (s *scheduler) Stop() {
 	if s.ticker == nil {
 		panic("trying to stop a scheduler never started, please create a new one and stop it")
 	}
-	s.done <- struct{}{} // signal close request
-	s.wg.Wait()          // wait for scheduler to finish tasks in current tick.
-	s.ticker.Stop()      // stop ticker
+	s.done <- struct{}{}          // signal close request
+	s.wg.Wait()                   // wait for scheduler to finish tasks in current tick.
+	s.actualStopTime = time.Now() // register actual stop date
+	s.ticker.Stop()               // stop ticker
+
 	return
 }
 
@@ -244,11 +252,20 @@ func (s *scheduler) Load() float64 {
 	return float64(s.load) / float64(s.Elapsed())
 }
 
-// Return the elapsed duration since last start.
-// Calculation will be wrong if duration was changed.
+// Return the calculated elapsed duration since last start, based on actual tick slots used.
+// Calculation is underestimated when tasks overruns and some ticks are skipped.
 func (s *scheduler) Elapsed() time.Duration {
 	s.lockstats.RLock()
 	defer s.lockstats.RUnlock()
 
 	return s.duration * (time.Duration)(s.ticks)
+}
+
+// Return the actual elapsed time since last start.
+func (s *scheduler) ActualElapsed() time.Duration {
+	if s.actualStopTime.Before(s.actualStartTime) {
+		// currently running ...
+		return time.Since(s.actualStartTime)
+	}
+	return s.actualStopTime.Sub(s.actualStartTime)
 }

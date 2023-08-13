@@ -124,13 +124,53 @@ func TestOverrun(t *testing.T) {
 	ps(s, trace)
 
 	s.Stop()
+	fmt.Println("\n ******** Stopped !")
+	ps(s, trace)
+	time.Sleep(time.Second)
+	ps(s, trace)
+
+}
+
+func TestLightLoad(t *testing.T) {
+	s := New()
+	t1, t2 := testTask(1.0), testTask(2.0)
+	trace := Trace(testTask(1.0))
+
+	s.Add(5, t1)
+	s.Add(2, t2)
+
+	s.Start(time.Second)
+	ps(s, trace)
+	time.Sleep(time.Second)
+	ps(s, trace)
+	time.Sleep(time.Second)
+	ps(s, trace)
+	time.Sleep(time.Second)
+	ps(s, trace)
+	time.Sleep(time.Second)
+	ps(s, trace)
+	time.Sleep(time.Second)
+	ps(s, trace)
+
+	s.Add(1, t2) // add while running and saturated
+
+	time.Sleep(time.Second)
+	ps(s, trace)
+	time.Sleep(time.Second)
+	ps(s, trace)
+	fmt.Println("\n ******** Stop requested ...")
+	ps(s, trace)
+	s.Stop()
+	fmt.Println("\n ******** Stopped !")
+	ps(s, trace)
+	time.Sleep(time.Second)
 	ps(s, trace)
 
 }
 
 func ps(s Scheduler, trace *TaskTracer) {
 
-	fmt.Printf("\n=================================\nLoad : %0.2f %% Elapsed : %v (%d ticks) \n", 100*s.Load(), s.Elapsed(), s.Ticks())
+	fmt.Printf("\n=================================\nLoad : %0.2f %% Elapsed calculated %v (%d ticks), actual %v \n", 100*s.Load(), s.Elapsed(), s.Ticks(), s.ActualElapsed())
 	fmt.Printf("Trace : count : %d, avg : %v, min :%v, max : %v, stdev : %v\n===========================================\n",
 		trace.Count(),
 		trace.AverageDuration(),

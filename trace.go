@@ -90,6 +90,9 @@ func (t *TaskTracer) MaxDuration() time.Duration {
 func (t *TaskTracer) MinDuration() time.Duration {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
+	if t.count == 0 {
+		return 0
+	}
 
 	return time.Duration(t.min)
 }
