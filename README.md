@@ -1,6 +1,5 @@
 # scheduler
-A simple scheduler lib for periodic tasks. Thread safe.
-
+A scheduler for periodic tasks. Thread safe and efficient.
 
 # How to use
 
