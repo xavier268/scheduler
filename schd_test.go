@@ -80,10 +80,49 @@ func TestTicksVisualAuto(t *testing.T) {
 
 	t.Log("Starting with 1/3 second delay")
 	s.Start(time.Second / 3)
-	time.Sleep(time.Second * 2)
+	s.Add(2, t1) // add tasks while running
+	time.Sleep(time.Second)
+	s.Add(2, t1) // add tasks while running
+	s.Remove(t2) // remove tasks while running
+	time.Sleep(time.Second)
 	ps(s, trace)
 	time.Sleep(time.Second * 2)
-	t.Log("Stopping")
+	t.Log("Stop request ...")
+	s.Stop()
+	t.Log("Stopped !")
+	ps(s, trace)
+
+}
+
+func TestOverrun(t *testing.T) {
+	s := New()
+	t1, t2 := testTask(100.0), testTask(200.0)
+	trace := Trace(testTask(10.0))
+
+	s.Add(1, t1, t1, t1, t1, t1, t1, t1, t1, t1, t1, t1, t1, t1, t2)
+	s.Add(2, t2)
+	s.Add(3, trace)
+
+	s.Start(time.Second / 10)
+	ps(s, trace)
+	time.Sleep(time.Second)
+	ps(s, trace)
+	time.Sleep(time.Second)
+	ps(s, trace)
+	time.Sleep(time.Second)
+	ps(s, trace)
+	time.Sleep(time.Second)
+	ps(s, trace)
+	time.Sleep(time.Second)
+	ps(s, trace)
+
+	s.Add(1, t2) // add while running and saturated
+
+	time.Sleep(time.Second)
+	ps(s, trace)
+	time.Sleep(time.Second)
+	ps(s, trace)
+
 	s.Stop()
 	ps(s, trace)
 

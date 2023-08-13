@@ -35,12 +35,12 @@ func Trace(t Task) *TaskTracer {
 
 func (t *TaskTracer) Run() error {
 
-	t.lock.Lock()
-	defer t.lock.Unlock()
-
 	start := time.Now()
 	err := t.task.Run()
 	dur := int64(time.Now().Sub(start))
+
+	t.lock.Lock()
+	defer t.lock.Unlock()
 
 	t.count += 1
 	t.d += dur
