@@ -1,5 +1,5 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/xavier268/scheduler.svg)](https://pkg.go.dev/github.com/xavier268/scheduler)
-
+[![Go Report Card](https://goreportcard.com/badge/github.com/xavier268/scheduler)](https://goreportcard.com/report/github.com/xavier268/scheduler)
 # scheduler
 A scheduler for periodic tasks. Thread safe and efficient.
 
